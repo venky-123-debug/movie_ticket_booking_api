@@ -5,7 +5,7 @@ const movieSchema = new mongoose.Schema({
   description: { type: String },
   genre: { type: Array, description: " [String]" },
   releaseDate: { type: String },
-  duration: { type: Number },
+  duration: { type: String },
   language: { type: String },
   director: { type: String },
   actors: { type: Array, description: " [String]" },

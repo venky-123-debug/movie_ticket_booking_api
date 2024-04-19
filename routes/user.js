@@ -13,6 +13,7 @@ app.post("/signup", async (req, res) => {
     if (!req.body.email) throw "No email"
     if (!req.body.username) throw "No userName"
     if (!req.body.password) throw "No password"
+    if (!req.body.role) throw "No role"
 
     if (!utilities.emailAddressPattern.test(req.body.email)) throw "Invalid email address"
     let thisUser = await user.findOne({ email: req.body.email }).lean()
@@ -21,7 +22,7 @@ app.post("/signup", async (req, res) => {
     let userId = uuidv4()
     console.log(userId)
 
-    let newUser = await user({ ...req.body, password: SHA256(req.body.password).toString(), userId: userId }).save()
+    let newUser = await new user({ ...req.body, password: SHA256(req.body.password).toString(), userId: userId }).save()
 
     response.data = newUser
     response.success = true
@@ -47,6 +48,7 @@ app.post("/login", async (req, res) => {
 
     let tokenData = {
       id: thisUser.userId,
+      role:thisUser.role
     }
     console.log({ tokenData })
 
