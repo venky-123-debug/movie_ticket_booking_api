@@ -1,0 +1,37 @@
+{
+  "name": "movie_ticket_booking_api",
+  "version": "1.0.0",
+  "description": "movie ticket booking api",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/venky-123-debug/movie_ticket_booking_api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/venky-123-debug/movie_ticket_booking_api/issues"
+  },
+  "homepage": "https://github.com/venky-123-debug/movie_ticket_booking_api#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.3.2",
+    "morgan": "^1.10.0",
+    "crypto": "^1.0.1",
+    "crypto-js": "^4.2.0",
+    "fs": "^0.0.1-security",
+    "jsonwebtoken": "^9.0.2",
+    "jsrsasign": "^11.1.0",
+    "multer": "^1.4.5-lts.1",
+    "postmark": "^4.0.2",
+    "prettier": "^3.2.5",
+    "uuid": "^9.0.1"
+  }
+}
