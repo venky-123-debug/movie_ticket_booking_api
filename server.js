@@ -23,8 +23,8 @@ app.use(function (req, res, next) {
   res.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
   next()
 })
-// const routes = require("./routes/index")
-// app.use("/", routes)
+const routes = require("./routes/index")
+app.use("/", routes)
 
 app.get("/", async (req, res) => {
   res.send("Hello world")

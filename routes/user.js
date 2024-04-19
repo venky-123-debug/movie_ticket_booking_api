@@ -3,19 +3,21 @@ const app = express.Router()
 const user = require("../models/user")
 const { v4: uuidv4 } = require("uuid")
 const SHA256 = require("crypto-js/sha256")
+const utilities = require("../scripts/utilities")
+const errorhandler = require("../scripts/error")
 
 app.post("/signup", async (req, res) => {
   let response = {}
   response.success = false
   try {
     if (!req.body.email) throw "No email"
-    if (!req.body.userName) throw "No userName"
+    if (!req.body.username) throw "No userName"
     if (!req.body.password) throw "No password"
 
+    if (!utilities.emailAddressPattern.test(req.body.email)) throw "Invalid email address"
     let thisUser = await user.findOne({ email: req.body.email }).lean()
-
     if (thisUser) throw "User already exists"
-  
+
     let userId = uuidv4()
     console.log(userId)
     let tokenData = {
@@ -23,13 +25,14 @@ app.post("/signup", async (req, res) => {
     }
     console.log({ tokenData })
 
+    let newUser = await user({ ...req.body, userId: userId }).save()
+
     let token = await utilities.generateToken(tokenData, process.env.JWT_SECRET, 86400)
     response.token = token
-    response.data = thisUser
-
+    response.data = newUser
     response.success = true
   } catch (error) {
-    response = await errorhandler(error, response, req.originalUrl)
+    response = await errorhandler(error, response)
   } finally {
     res.json(response)
   }
