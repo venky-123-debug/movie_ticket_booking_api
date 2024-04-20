@@ -1,6 +1,6 @@
 const express = require("express")
 const app = express.Router()
-const user = require("../models/user")
+const admin = require("../models/admin")
 const { v4: uuidv4 } = require("uuid")
 const SHA256 = require("crypto-js/sha256")
 const utilities = require("../scripts/utilities")
@@ -14,15 +14,15 @@ app.post("/signup", async (req, res) => {
     if (!req.body.password) throw "No password"
 
     if (!utilities.emailAddressPattern.test(req.body.email)) throw "Invalid email address"
-    let thisUser = await user.findOne({ email: req.body.email }).lean()
-    if (thisUser) throw "User already exists"
+    let thisAdmin = await admin.findOne({ email: req.body.email }).lean()
+    if (thisAdmin) throw "Admin already exists"
 
-    let userId = uuidv4()
-    console.log(userId)
+    let adminId = uuidv4()
+    console.log(adminId)
 
-    let newUser = await new user({ ...req.body, password: SHA256(req.body.password).toString(), userId: userId }).save()
+    let newAdmin = await new admin({ ...req.body, password: SHA256(req.body.password).toString(), userId: adminId }).save()
 
-    response.data = newUser
+    response.data = newAdmin
     response.success = true
   } catch (error) {
     response = await errorhandler(error, response)
@@ -38,21 +38,20 @@ app.post("/login", async (req, res) => {
     if (!req.body.email) throw "No email"
     if (!req.body.password) throw "No password"
     
-    if (!utilities.emailAddressPattern.test(req.body.email)) throw "Invalid email address"
-    let thisUser = await user.findOne({ email: req.body.email }).lean()
-    if (thisUser == null) throw "No user"
+    let thisAdmin = await admin.findOne({ email: req.body.email }).lean()
+    if (thisAdmin == null) throw "No admin found"
 
-    console.log({ thisUser })
-    if (thisUser.password != SHA256(req.body.password).toString()) throw "Invalid password"
+    console.log({ thisAdmin })
+    if (thisAdmin.password != SHA256(req.body.password).toString()) throw "Invalid password"
 
     let tokenData = {
-      id: thisUser.userId
+      id: thisAdmin.userId
     }
     console.log({ tokenData })
 
     let token = await utilities.generateToken(tokenData, process.env.JWT_SECRET, 86400)
     response.token = token
-    response.data = thisUser
+    response.data = thisAdmin
     response.success = true
   } catch (error) {
     response = await errorhandler(error, response, req.originalUrl)

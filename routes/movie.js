@@ -2,6 +2,7 @@ const express = require("express")
 const app = express.Router()
 const movie = require("../models/movie")
 const user = require("../models/user")
+const admin = require("../models/admin")
 const { v4: uuidv4 } = require("uuid")
 const utilities = require("../scripts/utilities")
 const errorhandler = require("../scripts/error")
@@ -15,8 +16,7 @@ app.post("/newMovie", upload.single("poster"), async (req, res) => {
     if (!req.headers["access-token"]) throw "No token"
     let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
     console.log("tokenData: ", tokenData)
-    if (tokenData.role != "Admin") throw "Invalid token, check admin credentials while login"
-    let correctAdmin = await user.findOne({ userId: tokenData.id }).lean()
+    let correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
     if (!correctAdmin || correctAdmin == null) throw "admin not found check token provided"
     let existingNewMovie = await movie.findOne({ title: req.body.title }).lean()
     if (existingNewMovie) throw "movie details already exists"
@@ -39,20 +39,19 @@ app.patch("/:id", upload.single("poster"), async (req, res) => {
     if (!movieId) {
       throw "Missing 'id' parameter in the query."
     }
-    let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
+    const tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
     console.log("tokenData: ", tokenData)
-    if (tokenData.role != "Admin") throw "Invalid token, check admin credentials while login"
-    let correctAdmin = await user.findOne({ userId: tokenData.id }).lean()
-    if (!correctAdmin || correctAdmin == null) throw "admin not found check token provided"
+    const correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
+    if (!correctAdmin || correctAdmin === null) throw "admin not found check token provided"
 
-    let existingMovieData = await movie.findOne({ movieId })
+    const existingMovieData = await movie.findOne({ movieId })
 
-    let toUpdateData = {}
+    const updateFields = req.file ? { ...req.body, poster: req.file.filename } : req.body
 
-    if (req.file) toUpdateData.logo = req.file.filename
-
-    toUpdateData = { ...existingMovieData._doc, ...toUpdateData, ...req.body }
-    const updatedMovieData = await movie.findOneAndUpdate({ movieId }, { ...toUpdateData }, { new: true }).lean()
+    console.log({updateFields})
+    
+    const updatedMovieData = await movie.findOneAndUpdate({ movieId }, { ...existingMovieData._doc, ...updateFields }, { new: true }).lean()
+    console.log({updatedMovieData})
 
     if (!updatedMovieData) {
       throw "No movie data found"
@@ -66,5 +65,6 @@ app.patch("/:id", upload.single("poster"), async (req, res) => {
     res.json(response)
   }
 })
+
 
 module.exports = app
