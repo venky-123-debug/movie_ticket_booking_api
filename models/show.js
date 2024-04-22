@@ -16,12 +16,13 @@ const theatreSchema = new mongoose.Schema({
 })
 
 const showSchema = new mongoose.Schema({
-  movie: { type: String, ref: "Movie" },
-  theatre: { type: String, ref: "Cinema" },
+  movie: { type: String,required:true },
+  theatre:  { type: String,required:true },
   screenNumber: { type: String, required: true },
   showTime: { type: Date, default: Date.now },
+  showId:{type:String},
   price: { type: String },
-  availableSeats: { type: Number },
+  availableSeats: { type: String },
 })
 
 module.exports.theatre = mongoose.model("Theatre", theatreSchema)
