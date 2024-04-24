@@ -106,6 +106,60 @@ app.post("/reserve", async (req, res) => {
   }
 })
 
+app.post("/unreserve", async (req, res) => {
+  let response = { success: false }
+  try {
+    // Authenticate user
+    if (!req.headers["access-token"]) throw "No token"
+    let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
+    console.log("tokenData: ", tokenData)
+    let correctUser = await user.findOne({ userId: tokenData.id }).lean()
+    if (!correctUser || correctUser == null) throw "User not found check token provided"
+
+    // Validate input
+    const { show: showId, seats: selectedSeats } = req.body
+    console.log("req.body", req.body)
+
+    // Check if the show exists
+    const thisShow = await show.findOne({ showId }).lean()
+    if (!thisShow) throw "Show not found"
+
+    // Create array to store unreserved seats
+    const unreservedSeats = []
+
+    // Iterate through selected seats and update reservation status
+    for (let i = 0; i < selectedSeats.length; i++) {
+      // Check if the seat is reserved by the user and not already booked
+      const thisSeat = await seat
+        .findOne({ show: showId, userId: tokenData.id, number: selectedSeats[i], reserved: true, })
+        .lean()
+      if (!thisSeat) {
+        throw `Seat number ${selectedSeats[i]} cannot be unreserved`
+      }
+
+      // Unreserve the seat
+      const unreservedSeat = await seat.findOneAndUpdate(
+        { show: showId, userId: tokenData.id, number: selectedSeats[i], reserved: true,},
+        { reserved: false, userId: null, reservedAt: null },
+        { new: true },
+      )
+      if (!unreservedSeat) {
+        throw `Failed to unreserve seat number ${selectedSeats[i]}`
+      }
+
+      // Add the unreserved seat to the response
+      unreservedSeats.push(unreservedSeat)
+    }
+
+    response.success = true
+    response.data = unreservedSeats
+  } catch (error) {
+    response = await errorhandler(error, response)
+  } finally {
+    res.json(response)
+  }
+})
+
 app.post("/confirmBooking", async (req, res) => {
   let response = { success: false }
   try {
@@ -119,9 +173,9 @@ app.post("/confirmBooking", async (req, res) => {
     // Validate input
     const { show: showId, seats: selectedSeats } = req.body
 
-    const bookedSeats = await seat.find({ show: showId, number: { $in: selectedSeats }, bookingId: { $ne: null } });
+    const bookedSeats = await seat.find({ show: showId, number: { $in: selectedSeats }, bookingId: { $ne: null } })
     if (bookedSeats.length > 0) {
-      throw "One or more selected seats are already booked";
+      throw "One or more selected seats are already booked"
     }
 
     // Check if the selected seats are already reserved by the user
@@ -148,7 +202,6 @@ app.post("/confirmBooking", async (req, res) => {
       }
     }
     const newBooking = await new booking({ show: showId, seats: selectedSeats, bookingId, user: tokenData.id }).save()
-
 
     // Respond with success and booking details
     response.success = true
