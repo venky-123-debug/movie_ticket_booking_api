@@ -53,7 +53,7 @@ app.get("/:id", async (req, res) => {
     response.success = true
     response.data = thisTheatre
   } catch (error) {
-    response = await errorhandler(error, response, req.originalUrl)
+    response = await errorhandler(error, response)
   } finally {
     res.json(response)
   }
@@ -133,7 +133,7 @@ app.delete("/:id", async (req, res) => {
     }
     response.success = true
   } catch (error) {
-    response = await errorhandler(error, response, req.originalUrl)
+    response = await errorhandler(error, response)
   } finally {
     res.json(response)
   }

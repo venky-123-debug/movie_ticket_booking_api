@@ -55,7 +55,7 @@ app.post("/login", async (req, res) => {
     response.data = thisUser
     response.success = true
   } catch (error) {
-    response = await errorhandler(error, response, req.originalUrl)
+    response = await errorhandler(error, response)
   } finally {
     res.json(response)
   }
