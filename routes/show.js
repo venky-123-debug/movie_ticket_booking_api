@@ -55,11 +55,9 @@ app.post("/newShow", async (req, res) => {
     let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
     console.log("tokenData: ", tokenData)
     let correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
-    if (!correctAdmin || correctAdmin == null) throw "admin not found check token provided"
-    // let existingNewTheatre = await show.findOne({ name: req.body.name },{location:req.body.location}).lean()
-    // if (existingNewTheatre) throw "Theatre details already exists"
+    if (!correctAdmin || correctAdmin == null) throw "Admin not found check token provided"
     let showId = uuidv4()
-    let newTheatre = await new show({ ...req.body,  showId }).save()
+    let newTheatre = await new show({ ...req.body, showId }).save()
     response.success = true
     response.data = newTheatre
   } catch (error) {
@@ -81,7 +79,7 @@ app.patch("/:id", async (req, res) => {
     const tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
     console.log("tokenData: ", tokenData)
     const correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
-    if (!correctAdmin || correctAdmin === null) throw "admin not found check token provided"
+    if (!correctAdmin || correctAdmin === null) throw "Admin not found check token provided"
 
     const existingShowData = await show.findOne({ showId })
 
@@ -111,7 +109,7 @@ app.delete("/:id", async (req, res) => {
     let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
     console.log("tokenData: ", tokenData)
     let correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
-    if (!correctAdmin || correctAdmin == null) throw "admin not found check token provided"
+    if (!correctAdmin || correctAdmin == null) throw "Admin not found check token provided"
     const showId = req.params.id
     if (!showId) {
       throw "No 'Id' provided in params"

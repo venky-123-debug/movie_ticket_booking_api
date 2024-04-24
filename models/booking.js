@@ -5,6 +5,8 @@ const bookingSchema = new mongoose.Schema({
   show: { type: String, ref: 'Show' },
   seats: { type: Array, description: " [String]" },
   totalPrice: {type:String},
+  bookingId: {type:String},
+  showCancelled: {type:Boolean,default:false},
   bookedDate: { type: Date, default: Date.now },
 });
 

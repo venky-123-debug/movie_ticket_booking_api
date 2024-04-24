@@ -69,7 +69,7 @@ app.post("/newMovie", upload.single("poster"), async (req, res) => {
     let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
     console.log("tokenData: ", tokenData)
     let correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
-    if (!correctAdmin || correctAdmin == null) throw "admin not found check token provided"
+    if (!correctAdmin || correctAdmin == null) throw "Admin not found check token provided"
     let existingNewMovie = await movie.findOne({ title: req.body.title }).lean()
     if (existingNewMovie) throw "movie details already exists"
     let movieId = uuidv4()
@@ -94,7 +94,7 @@ app.patch("/:id", upload.single("poster"), async (req, res) => {
     const tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
     console.log("tokenData: ", tokenData)
     const correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
-    if (!correctAdmin || correctAdmin === null) throw "admin not found check token provided"
+    if (!correctAdmin || correctAdmin === null) throw "Admin not found check token provided"
 
     const existingMovieData = await movie.findOne({ movieId })
 
@@ -128,7 +128,7 @@ app.delete("/:id", async (req, res) => {
     let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
     console.log("tokenData: ", tokenData)
     let correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
-    if (!correctAdmin || correctAdmin == null) throw "admin not found check token provided"
+    if (!correctAdmin || correctAdmin == null) throw "Admin not found check token provided"
     const movieId = req.params.id
     if (!movieId) {
       throw "No 'Id' provided in params"
