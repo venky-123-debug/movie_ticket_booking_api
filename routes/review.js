@@ -16,7 +16,13 @@ app.post("/", async (req, res) => {
     let userId = tokenData.id
     let correctUser = await user.findOne({ userId }).lean()
     if (!correctUser || correctUser == null) throw "User not found check token provided"
-    const { movieId, content } = req.body
+    const { movieId, content, ratingWeight } = req.body
+    if (!req.body.content) throw "Enter a review content"
+    if (req.body.ratingWeight) {
+      if (req.body.ratingWeight !== Number(req.body.ratingWeight)) throw "Rating must be a Number"
+      if (req.body.ratingWeight < 1 || req.body.ratingWeight > 5) throw "Rating must be between 1 to 5"
+    }
+
     let thisReview = await review.findOne({ movieId }, { userId }).lean()
     if (thisReview) throw "User already left a review"
     const isValidMovie = await movie.findOne({ movieId }).lean()
@@ -26,7 +32,7 @@ app.post("/", async (req, res) => {
     }
     let reviewId = uuidv4()
 
-    let newReview = await new review({ movieId, userId, content, reviewId, createdAt: Date.now() }).save()
+    let newReview = await new review({ movieId, userId, content, reviewId, ratingWeight, createdAt: Date.now() }).save()
     response.success = true
     response.data = newReview
   } catch (error) {
@@ -48,7 +54,13 @@ app.patch("/:id", async (req, res) => {
     const tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
     console.log("tokenData: ", tokenData)
     let userId = tokenData.id
-    let { movieId, content } = req.body
+    let { movieId, content, ratingWeight } = req.body
+    if (!req.body.content) throw "Enter a review content"
+    if (req.body.ratingWeight) {
+      if (req.body.ratingWeight !== Number(req.body.ratingWeight)) throw "Rating must be a Number"
+      if (req.body.ratingWeight < 1 || req.body.ratingWeight > 5) throw "Rating must be between 1 to 5"
+    }
+
     const correctUser = await user.findOne({ userId }).lean()
     if (!correctUser || correctUser === null) throw "Admin not found check token provided"
 
@@ -63,7 +75,15 @@ app.patch("/:id", async (req, res) => {
     }
 
     const updatedReviewData = await review
-      .findOneAndUpdate({ movieId, userId }, { content, updatedAt: Date.now() }, { new: true })
+      .findOneAndUpdate(
+        { movieId, userId },
+        {
+          content,
+          ratingWeight: req.body.ratingWeight ? req.body.ratingWeight : isValidReview.ratingWeight,
+          updatedAt: Date.now(),
+        },
+        { new: true },
+      )
       .lean()
     console.log({ updatedReviewData })
 
@@ -97,7 +117,6 @@ app.delete("/:id", async (req, res) => {
 
     if (!isValidReview) {
       throw "Review not found"
-
     }
 
     const deletedReview = await review.findOneAndDelete({ reviewId, userId }).lean()
