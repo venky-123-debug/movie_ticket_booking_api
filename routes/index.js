@@ -5,6 +5,7 @@ const movie = require("./movie")
 const theatre = require("./theatre")
 const show = require("./show")
 const booking = require("./booking")
+const review =require("./review")
 
 const app = express.Router()
 
@@ -14,5 +15,6 @@ app.use("/movie/", movie)
 app.use("/theatre/", theatre)
 app.use("/show/", show)
 app.use("/booking/", booking)
+app.use("/review/", review)
 
 module.exports = app
