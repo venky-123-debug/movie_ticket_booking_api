@@ -6,7 +6,6 @@ const theatre = require("./theatre")
 const show = require("./show")
 const booking = require("./booking")
 const review =require("./review")
-const rating =require("./rating")
 
 const app = express.Router()
 
@@ -17,6 +16,5 @@ app.use("/theatre/", theatre)
 app.use("/show/", show)
 app.use("/booking/", booking)
 app.use("/review/", review)
-app.use("/rating/", rating)
 
 module.exports = app
