@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema({
-  movie: { type: mongoose.Schema.Types.ObjectId, ref: 'Movie' },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  text: String,
+  movieId: { type: String, ref: 'Movie' },
+  userId: { type: String, ref: 'User' },
+  content: {type:String},
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 
 const ratingSchema = new mongoose.Schema({
-  movie: { type: mongoose.Schema.Types.ObjectId, ref: 'Movie' },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  movieId: { type: String, ref: 'Movie' },
+  userId: { type: String, ref: 'User' },
   rating: { type: Number, min: 1, max: 5 },
+  createdAt: { type: Date, default: Date.now },
+
 });
 
 module.exports.Rating = mongoose.model('Rating', ratingSchema);
