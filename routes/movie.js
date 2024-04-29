@@ -62,26 +62,78 @@ app.get("/:id", async (req, res) => {
   }
 })
 
-app.post("/newMovie", upload.single("poster"), async (req, res) => {
-  let response = { success: false }
-  try {
-    if (!req.headers["access-token"]) throw "No token"
-    let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
-    console.log("tokenData: ", tokenData)
-    let correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
-    if (!correctAdmin || correctAdmin == null) throw "Admin not found check token provided"
-    let existingNewMovie = await movie.findOne({ title: req.body.title }).lean()
-    if (existingNewMovie) throw "movie details already exists"
-    let movieId = uuidv4()
-    let newMovie = await new movie({ ...req.body, poster: req.file ? req.file.filename : "", movieId: movieId }).save()
-    response.success = true
-    response.data = newMovie
-  } catch (error) {
-    response = await errorhandler(error, response)
-  } finally {
-    res.json(response)
-  }
-})
+// app.post("/newMovie", upload.single("poster"), async (req, res) => {
+//   let response = { success: false }
+//   try {
+//     if (!req.headers["access-token"]) throw "No token"
+//     let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
+//     console.log("tokenData: ", tokenData)
+//     let correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
+//     if (!correctAdmin || correctAdmin == null) throw "Admin not found check token provided"
+//     let existingNewMovie = await movie.findOne({ title: req.body.title }).lean()
+//     if (existingNewMovie) throw "movie details already exists"
+//     let movieId = uuidv4()
+//     let newMovie = await new movie({ ...req.body, poster: req.file ? req.file.filename : "", movieId: movieId }).save()
+//     response.success = true
+//     response.data = newMovie
+//   } catch (error) {
+//     response = await errorhandler(error, response)
+//   } finally {
+//     res.json(response)
+//   }
+// })
+
+app.post(
+  "/newMovie",
+  upload.fields([{ name: "poster" }, { name: "actorImages" }, { name: "directorImage" }]),
+  async (req, res) => {
+    let response = { success: false }
+    try {
+      if (!req.headers["access-token"]) throw "No token"
+      let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
+      console.log("tokenData: ", tokenData)
+      let correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
+      if (!correctAdmin || correctAdmin == null) throw "Admin not found check token provided"
+      let existingNewMovie = await movie.findOne({ title: req.body.title }).lean()
+      if (existingNewMovie) throw "movie details already exists"
+
+      // Handle director image
+      const directorImage = req.files["directorImage"] ? req.files["directorImage"][0].filename : ""
+
+      // Handle actor images
+      const actorImages = req.files["actorImages"] ? req.files["actorImages"].map((file) => file.filename) : []
+
+      // Ensure each actor object includes name and image
+      const actors = req.body.actors.map((actor, index) => ({
+        name: actor.name,
+        image: actorImages[index] ? actorImages[index] : "",
+      }))
+
+      // Ensure director object includes name and image
+      const director = {
+        name: req.body.director.name,
+        image: directorImage ? directorImage : "",
+      }
+
+      let movieId = uuidv4()
+      let newMovie = await new movie({
+        ...req.body,
+        poster: req.files["poster"] ? req.files["poster"][0].filename : "",
+        movieId: movieId,
+        director: director,
+        actors: actors,
+      }).save()
+
+      response.success = true
+      response.data = newMovie
+    } catch (error) {
+      response = await errorhandler(error, response)
+    } finally {
+      res.json(response)
+    }
+  },
+)
+
 app.patch("/:id", upload.single("poster"), async (req, res) => {
   let response = { success: false }
   try {
@@ -123,7 +175,6 @@ app.delete("/:id", async (req, res) => {
   let response = { success: false }
 
   try {
-
     if (!req.headers["access-token"]) throw "No token"
     let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
     console.log("tokenData: ", tokenData)
