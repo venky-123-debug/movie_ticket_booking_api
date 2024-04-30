@@ -85,43 +85,57 @@ app.get("/:id", async (req, res) => {
 
 app.post(
   "/newMovie",
-  upload.fields([{ name: "poster" }, { name: "actorImages" }, { name: "directorImage" }]),
+  upload.fields([{ name: "poster" }, { name: "actorImages" }, { name: "crewImages" }]),
   async (req, res) => {
     let response = { success: false }
     try {
       if (!req.headers["access-token"]) throw "No token"
       let tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
-      console.log("tokenData: ", tokenData)
       let correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
       if (!correctAdmin || correctAdmin == null) throw "Admin not found check token provided"
       let existingNewMovie = await movie.findOne({ title: req.body.title }).lean()
-      if (existingNewMovie) throw "movie details already exists"
+      if (existingNewMovie) throw "Movie details already exist"
 
       // Handle director image
-      const directorImage = req.files["directorImage"] ? req.files["directorImage"][0].filename : ""
+      const crewImages = req.files["crewImages"] ? req.files["crewImages"].map((file) => file.filename) : []
 
       // Handle actor images
       const actorImages = req.files["actorImages"] ? req.files["actorImages"].map((file) => file.filename) : []
 
+      console.log(req.body, req.files)
+
+      // Ensure actors array is parsed correctly
+      let actors = []
+      let crew = []
+      try {
+        actors = JSON.parse(req.body.actors)
+      } catch (error) {
+        throw "Error parsing actors array"
+      }
+
       // Ensure each actor object includes name and image
-      const actors = req.body.actors.map((actor, index) => ({
+      const actorsWithImages = actors.map((actor, index) => ({
         name: actor.name,
         image: actorImages[index] ? actorImages[index] : "",
       }))
 
       // Ensure director object includes name and image
-      const director = {
-        name: req.body.director.name,
-        image: directorImage ? directorImage : "",
-      }
-
+      const crewWithImages = crew.map((crew, index) => ({
+        name: crew.name,
+        role: crew.role,
+        image: crewImages[index] ? crewImages[index] : "",
+      }))
+      // console.log(typeof req.body.language)
       let movieId = uuidv4()
+      // let movieLanguages = JSON.parse(req.body.language)
       let newMovie = await new movie({
         ...req.body,
         poster: req.files["poster"] ? req.files["poster"][0].filename : "",
         movieId: movieId,
-        director: director,
-        actors: actors,
+        language: req.body.language,
+         // genre: req.body.genre,
+        crew: crewWithImages,
+        actors: actorsWithImages,
       }).save()
 
       response.success = true
