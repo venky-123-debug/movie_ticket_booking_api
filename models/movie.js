@@ -24,7 +24,4 @@ const movieSchema = new mongoose.Schema({
   poster: { type: String, description: "movie poster" }
 });
 
-// Indexes
-// movieSchema.index({ title: 'text', genre: 1 });
-
 module.exports = mongoose.model("Movie", movieSchema);

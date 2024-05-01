@@ -96,7 +96,6 @@ app.post(
       let existingMovie = await movie.findOne({ title: req.body.title }).lean()
       if (existingMovie) throw "Movie details already exist"
 
-      // Extract image filenames from the uploaded files
       const poster = req.files["poster"] ? req.files["poster"][0].filename : ""
       const actorImages = req.files["actorImages"] ? req.files["actorImages"].map((file) => file.filename) : []
       const crewImages = req.files["crewImages"] ? req.files["crewImages"].map((file) => file.filename) : []
@@ -117,20 +116,27 @@ app.post(
         role: crewMember.role,
         image: crewImages[index] || "", // Use empty string if image is missing
       }))
-
+      let movieId = uuidv4()
       // Create a new movie object using the Movie model
       const newMovie = await new movie({
-        title: req.body.title,
-        description: req.body.description,
-        genre: req.body.genre,
-        releaseDate: req.body.releaseDate,
-        duration: req.body.duration,
-        language: req.body.language,
-        poster: poster,
-        actors: actorsWithImages,
+        ...req.body,
+        poster,
+        movieId: movieId,
         crew: crewWithImages,
-      })
-      newMovie.save()
+        actors: actorsWithImages,
+      }).save()
+      // const newMovie = await new movie({
+      //   title: req.body.title,
+      //   description: req.body.description,
+      //   genre: req.body.genre,
+      //   releaseDate: req.body.releaseDate,
+      //   duration: req.body.duration,
+      //   language: req.body.language,
+      //   poster: poster,
+      //   actors: actorsWithImages,
+      //   crew: crewWithImages,
+      // })
+      // newMovie.save()
 
       response.success = true
       response.data = newMovie
