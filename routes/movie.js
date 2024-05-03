@@ -125,7 +125,44 @@ app.post(
   },
 )
 
-app.patch("/:id", upload.single("poster"), async (req, res) => {
+// app.patch("/:id", upload.single("poster"), async (req, res) => {
+//   let response = { success: false }
+//   try {
+//     if (!req.headers["access-token"]) throw "No token"
+//     const movieId = req.params.id
+
+//     if (!movieId) {
+//       throw "Missing 'id' parameter in the query."
+//     }
+//     const tokenData = await utilities.verifyToken(req.headers["access-token"], process.env.JWT_SECRET)
+//     console.log("tokenData: ", tokenData)
+//     const correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
+//     if (!correctAdmin || correctAdmin === null) throw "Admin not found check token provided"
+
+//     const existingMovieData = await movie.findOne({ movieId })
+
+//     const updateFields = req.file ? { ...req.body, poster: req.file.filename } : req.body
+
+//     console.log({ updateFields })
+
+//     const updatedMovieData = await movie
+//       .findOneAndUpdate({ movieId }, { ...existingMovieData._doc, ...updateFields }, { new: true })
+//       .lean()
+//     console.log({ updatedMovieData })
+
+//     if (!updatedMovieData) {
+//       throw "No movie data found"
+//     }
+//     response.success = true
+//     response.data = updatedMovieData
+//   } catch (error) {
+//     response = await errorhandler(error, response)
+//   } finally {
+//     res.json(response)
+//   }
+// })
+
+app.patch("/:id", upload.fields([{ name: "poster" }, { name: "actorImages" }, { name: "crewImages" }]), async (req, res) => {
   let response = { success: false }
   try {
     if (!req.headers["access-token"]) throw "No token"
@@ -139,14 +176,41 @@ app.patch("/:id", upload.single("poster"), async (req, res) => {
     const correctAdmin = await admin.findOne({ userId: tokenData.id }).lean()
     if (!correctAdmin || correctAdmin === null) throw "Admin not found check token provided"
 
-    const existingMovieData = await movie.findOne({ movieId })
+    const existingMovieData = await movie.findOne({ movieId }).lean()
 
-    const updateFields = req.file ? { ...req.body, poster: req.file.filename } : req.body
+    const updateFields = req.files ? {
+      ...req.body,
+      poster: req.files["poster"] ? req.files["poster"][0].filename : existingMovieData.poster,
+    } : req.body
 
-    console.log({ updateFields })
+    // Handle actors and crew updates
+    const actorImages = req.files["actorImages"] ? req.files["actorImages"].map((file) => file.filename) : existingMovieData.actors.map(actor => actor.image)
+    const crewImages = req.files["crewImages"] ? req.files["crewImages"].map((file) => file.filename) : existingMovieData.crew.map(crew => crew.image)
+
+    const actors = Array.isArray(req.body.actors) ? req.body.actors : existingMovieData.actors.map(actor => actor.name)
+    const crew = Array.isArray(req.body.crew) ? req.body.crew : existingMovieData.crew.map(crew => ({ name: crew.name, role: crew.role }))
+
+    // Validate actors and crew
+    for (const actor of actors) {
+      if (!actor.name) throw new Error("Actor name is required")
+    }
+    for (const crewMember of crew) {
+      if (!crewMember.name || !crewMember.role) throw new Error("Crew member name and role are required")
+    }
+
+    const actorsWithImages = actors.map((actor, index) => ({
+      name: actor.name,
+      image: actorImages[index] || "", // Use existing image if not updated
+    }))
+
+    const crewWithImages = crew.map((crewMember, index) => ({
+      name: crewMember.name,
+      role: crewMember.role,
+      image: crewImages[index] || "", // Use existing image if not updated
+    }))
 
     const updatedMovieData = await movie
-      .findOneAndUpdate({ movieId }, { ...existingMovieData._doc, ...updateFields }, { new: true })
+      .findOneAndUpdate({ movieId }, { ...req.body, actors: actorsWithImages, crew: crewWithImages }, { new: true })
       .lean()
     console.log({ updatedMovieData })
 
@@ -161,6 +225,7 @@ app.patch("/:id", upload.single("poster"), async (req, res) => {
     res.json(response)
   }
 })
+
 
 app.delete("/:id", async (req, res) => {
   let response = { success: false }
