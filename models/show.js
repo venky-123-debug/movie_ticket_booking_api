@@ -3,11 +3,12 @@ const mongoose = require("mongoose")
 const theatreSchema = new mongoose.Schema({
   name: { type: String, required: true },
   location: { type: String, required: true },
-  capacity: { type: String, required: true },
   theatreId: {type: String},
   screens: [
     {
       _id: false,
+      name:{type:String},
+      capacity: { type: String, required: true },
       number: { type: String, required: true },
       //movie ID
       currentMovie: { type: String, },
